@@ -13,23 +13,47 @@ import {
 import { useCallback, useState } from "react";
 
 export default function Home() {
-    const [delay, setDelay] = useState(2000);
-    const [chordName, setChordName] = useState<ChordName | "">("");
-    const [chordQuality, setChordQuality] = useState<ChordQuality | "">("");
-    const [chordInversion, setChordInversion] = useState<ChordInversion | "">("");
-    const [rootString, setRootString] = useState<RootString | "">("");
+    const [delay, setDelay] = useState<number>(1000);
+    const [chordName, setChordName] = useState<ChordName>("C");
+    const [chordQuality, setChordQuality] = useState<ChordQuality>("Diminished 7th");
+    const [chordInversion, setChordInversion] = useState<ChordInversion>("None");
+    const [rootString, setRootString] = useState<RootString>("First");
+
+    const playNameOfChord = useCallback(async () => {
+        const parts: string[] = [chordName.replace("#", ". SHARP "), chordQuality];
+        if (chordInversion !== "None") {
+            parts.push(chordInversion);
+        }
+        const speech = new SpeechSynthesisUtterance(parts.join(" "));
+        speech.voice = speechSynthesis.getVoices().find((voice) => voice.lang === "en-US") ?? null;
+        speech.lang = "en-US";
+        speech.rate = 0.8;
+        speech.volume = 1;
+        speech.pitch = 2;
+        speechSynthesis.speak(speech);
+        // await the end of the speech
+        await new Promise((resolve) => {
+            speech.onend = resolve;
+        });
+    }, [chordInversion, chordName, chordQuality]);
+
+    const playSound = useCallback(async () => {
+        const audio = new Audio("/sounds/example.wav");
+        audio.play();
+
+        await new Promise((resolve) => {
+            audio.onended = resolve;
+        });
+    }, []);
 
     const onSubmit = useCallback(
-        (e: React.FormEvent<HTMLFormElement>) => {
+        async (e: React.FormEvent<HTMLFormElement>) => {
             e.preventDefault();
-
-            const audioContext = new AudioContext();
-            const oscillator = audioContext.createOscillator();
-            oscillator.connect(audioContext.destination);
-            oscillator.start();
-            oscillator.stop(audioContext.currentTime + delay / 1000);
+            await playNameOfChord();
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            await playSound();
         },
-        [delay]
+        [delay, playNameOfChord, playSound]
     );
 
     return (
@@ -92,6 +116,7 @@ export default function Home() {
                     </select>
                 </label>
                 <br />
+
                 <button type="submit">Start</button>
             </form>
         </main>
