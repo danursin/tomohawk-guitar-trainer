@@ -12,15 +12,10 @@ import {
 } from "./services/OptionService";
 import { useCallback, useState } from "react";
 
-const getRandomItem = <T,>(array: ReadonlyArray<T>): T => {
-    const randomIndex = Math.floor(Math.random() * array.length);
-    return array[randomIndex];
-};
-
 export default function Home() {
     const [delay, setDelay] = useState<number>(1000);
-    const [chordName, setChordName] = useState<ChordName>(getRandomItem(chordNameOptions));
-    const [chordQuality, setChordQuality] = useState<ChordQuality>(getRandomItem(chordQualityOptions));
+    const [chordName, setChordName] = useState<ChordName>("A");
+    const [chordQuality, setChordQuality] = useState<ChordQuality>("Major");
     const [chordInversion, setChordInversion] = useState<ChordInversion>("None");
     const [rootString, setRootString] = useState<RootString>("First");
 
