@@ -21,8 +21,8 @@ export default function Home() {
     const [delay, setDelay] = useState<number>(1000);
     const [chordName, setChordName] = useState<ChordName>(getRandomItem(chordNameOptions));
     const [chordQuality, setChordQuality] = useState<ChordQuality>(getRandomItem(chordQualityOptions));
-    const [chordInversion, setChordInversion] = useState<ChordInversion>(getRandomItem(chordInversionOptions));
-    const [rootString, setRootString] = useState<RootString>(getRandomItem(rootStringOptions));
+    const [chordInversion, setChordInversion] = useState<ChordInversion>("None");
+    const [rootString, setRootString] = useState<RootString>("First");
 
     const playNameOfChord = useCallback(async () => {
         const parts: string[] = [chordName.replace("#", ". SHARP "), chordQuality];
@@ -76,7 +76,6 @@ export default function Home() {
                 <label>
                     Chord Name:
                     <select value={chordName} onChange={(e) => setChordName(e.target.value as ChordName)}>
-                        <option value="">Random</option>
                         {chordNameOptions.map((name) => (
                             <option key={name} value={name}>
                                 {name}
