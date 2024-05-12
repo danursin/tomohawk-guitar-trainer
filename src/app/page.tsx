@@ -12,12 +12,17 @@ import {
 } from "./services/OptionService";
 import { useCallback, useState } from "react";
 
+const getRandomItem = <T,>(array: ReadonlyArray<T>): T => {
+    const randomIndex = Math.floor(Math.random() * array.length);
+    return array[randomIndex];
+};
+
 export default function Home() {
     const [delay, setDelay] = useState<number>(1000);
-    const [chordName, setChordName] = useState<ChordName>("C");
-    const [chordQuality, setChordQuality] = useState<ChordQuality>("Diminished 7th");
-    const [chordInversion, setChordInversion] = useState<ChordInversion>("None");
-    const [rootString, setRootString] = useState<RootString>("First");
+    const [chordName, setChordName] = useState<ChordName>(getRandomItem(chordNameOptions));
+    const [chordQuality, setChordQuality] = useState<ChordQuality>(getRandomItem(chordQualityOptions));
+    const [chordInversion, setChordInversion] = useState<ChordInversion>(getRandomItem(chordInversionOptions));
+    const [rootString, setRootString] = useState<RootString>(getRandomItem(rootStringOptions));
 
     const playNameOfChord = useCallback(async () => {
         const parts: string[] = [chordName.replace("#", ". SHARP "), chordQuality];
@@ -83,7 +88,6 @@ export default function Home() {
                 <label>
                     Chord Quality:
                     <select value={chordQuality} onChange={(e) => setChordQuality(e.target.value as ChordQuality)}>
-                        <option value="">Random</option>
                         {chordQualityOptions.map((name) => (
                             <option key={name} value={name}>
                                 {name}
@@ -95,7 +99,6 @@ export default function Home() {
                 <label>
                     Chord Inversion:
                     <select value={chordInversion} onChange={(e) => setChordInversion(e.target.value as ChordInversion)}>
-                        <option value="">Random</option>
                         {chordInversionOptions.map((name) => (
                             <option key={name} value={name}>
                                 {name}
@@ -107,7 +110,6 @@ export default function Home() {
                 <label>
                     Root String:
                     <select value={rootString} onChange={(e) => setRootString(e.target.value as RootString)}>
-                        <option value="">Random</option>
                         {rootStringOptions.map((name) => (
                             <option key={name} value={name}>
                                 {name}
