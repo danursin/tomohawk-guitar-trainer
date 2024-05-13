@@ -19,6 +19,7 @@ export default function Home() {
     const [delay, setDelay] = useState<number>(1000);
     const [speechRate, setSpeechRate] = useState<number>(1);
     const [batchSize, setBatchSize] = useState<number>(1);
+    const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [triadNames, setTriadNames] = useState<Set<TriadName>>(new Set<TriadName>(["A", "B", "C", "D", "E", "F", "G"]));
     const [triadQualities, setTriadQualities] = useState<Set<TriadQuality>>(new Set<TriadQuality>(triadQualityOptions));
     const [triadInversions, setTriadInversions] = useState<Set<TriadInversion>>(new Set<TriadInversion>(["Root position"]));
@@ -108,6 +109,7 @@ export default function Home() {
                 const stringSet = stringSetArray[Math.floor(Math.random() * stringSetArray.length)];
 
                 setCurrentSelection({ triadName, triadQuality, triadInversion, stringSet });
+                setIsPlaying(true);
                 try {
                     // play the name of the triad
                     await playNameOfTriad(triadName, triadQuality, triadInversion, stringSet);
@@ -118,6 +120,8 @@ export default function Home() {
                 } catch (error) {
                     toast.error(`Error playing ${triadName} ${triadQuality} ${triadInversion} ${stringSet}`);
                     console.error(error);
+                } finally {
+                    setIsPlaying(false);
                 }
             }
         },
@@ -205,7 +209,15 @@ export default function Home() {
                     />
                 </Form.Group>
 
-                <Form.Button content="Play" type="button" fluid color="blue" icon="play" onClick={() => playBatch(batchSize)} />
+                <Form.Button
+                    content={isPlaying ? "Playing..." : "Play"}
+                    type="button"
+                    disabled={isPlaying}
+                    fluid
+                    color="blue"
+                    icon="play"
+                    onClick={() => playBatch(batchSize)}
+                />
             </Form>
             {currentSelection && (
                 <Grid textAlign="center">
