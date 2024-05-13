@@ -1,44 +1,90 @@
 "use client";
 
+import { Divider, Form, Grid, Statistic } from "semantic-ui-react";
 import {
-    ChordInversion,
-    ChordName,
-    ChordQuality,
-    RootString,
-    chordInversionOptions,
-    chordNameOptions,
-    chordQualityOptions,
-    rootStringOptions
+    StringSet,
+    TriadInversion,
+    TriadName,
+    TriadQuality,
+    stringSetOptions,
+    triadInversionOptions,
+    triadNameOptions,
+    triadQualityOptions
 } from "./services/OptionService";
 import { useCallback, useState } from "react";
 
 export default function Home() {
     const [delay, setDelay] = useState<number>(1000);
-    const [chordName, setChordName] = useState<ChordName>("A");
-    const [chordQuality, setChordQuality] = useState<ChordQuality>("Major");
-    const [chordInversion, setChordInversion] = useState<ChordInversion>("None");
-    const [rootString, setRootString] = useState<RootString>("First");
+    const [speechRate, setSpeechRate] = useState<number>(1);
+    const [batchSize, setBatchSize] = useState<number>(1);
+    const [triadNames, setTriadNames] = useState<Set<TriadName>>(new Set<TriadName>(triadNameOptions));
+    const [triadQualities, setTriadQualities] = useState<Set<TriadQuality>>(new Set<TriadQuality>(triadQualityOptions));
+    const [triadInversions, setTriadInversions] = useState<Set<TriadInversion>>(new Set<TriadInversion>(["Root position"]));
+    const [stringSets, setStringSets] = useState<Set<StringSet>>(new Set<StringSet>(["1-3"]));
+    const [currentSelection, setCurrentSelection] = useState<
+        | {
+              triadName: TriadName;
+              triadQuality: TriadQuality;
+              triadInversion: TriadInversion;
+              stringSet: StringSet;
+          }
+        | undefined
+    >();
 
-    const playNameOfChord = useCallback(async () => {
-        const parts: string[] = [chordName.replace("#", ". SHARP "), chordQuality];
-        if (chordInversion !== "None") {
-            parts.push(chordInversion);
-        }
-        const speech = new SpeechSynthesisUtterance(parts.join(" "));
-        speech.voice = speechSynthesis.getVoices().find((voice) => voice.lang === "en-US") ?? null;
-        speech.lang = "en-US";
-        speech.rate = 0.8;
-        speech.volume = 1;
-        speech.pitch = 2;
-        speechSynthesis.speak(speech);
-        // await the end of the speech
-        await new Promise((resolve) => {
-            speech.onend = resolve;
-        });
-    }, [chordInversion, chordName, chordQuality]);
+    const formatSoundName = useCallback((triadName: TriadName, triadQuality: TriadQuality, stringSet: StringSet) => {
+        const triadNameMap: Record<TriadName, string> = {
+            A: "A",
+            "A♯/B♭": "A#",
+            B: "B",
+            C: "C",
+            "C♯/D♭": "C#",
+            D: "D",
+            "D♯/E♭": "D#",
+            E: "E",
+            F: "F",
+            "F♯/G♭": "F#",
+            G: "G",
+            "G♯/A♭": "G#"
+        };
 
-    const playSound = useCallback(async () => {
-        const audio = new Audio("/sounds/example.wav");
+        const triadQualityMap: Record<TriadQuality, string> = {
+            Major: "maj",
+            Minor: "min"
+        };
+
+        return `${triadNameMap[triadName]}${triadQualityMap[triadQuality]}_NoInversion_${stringSet}.mp3`;
+    }, []);
+
+    const playNameOfTriad = useCallback(
+        async (triadName: TriadName, triadQuality: TriadQuality, triadInversion: TriadInversion, stringSet: StringSet) => {
+            let spokenTriadName: string = triadName.replace("♯", ". SHARP ").replace("♭", ". FLAT ");
+            if (triadName === "A") {
+                spokenTriadName = '"A"';
+            }
+
+            const parts: string[] = [spokenTriadName, triadQuality];
+            if (triadInversion !== "Root position") {
+                parts.push(triadInversion);
+            }
+            if (stringSet !== "1-3") {
+                parts.push(`String set ${stringSet}`);
+            }
+            const speech = new SpeechSynthesisUtterance(parts.join(" "));
+            speech.voice = speechSynthesis.getVoices().find((voice) => voice.lang === "en-US") ?? null;
+            speech.lang = "en-US";
+            speech.rate = speechRate;
+            speech.volume = 1;
+            speech.pitch = 2;
+            speechSynthesis.speak(speech);
+            await new Promise((resolve) => {
+                speech.onend = resolve;
+            });
+        },
+        [speechRate]
+    );
+
+    const playSound = useCallback(async (filename: string) => {
+        const audio = new Audio(`/sounds/${encodeURIComponent(filename)}`);
         audio.play();
 
         await new Promise((resolve) => {
@@ -46,75 +92,129 @@ export default function Home() {
         });
     }, []);
 
-    const onSubmit = useCallback(
-        async (e: React.FormEvent<HTMLFormElement>) => {
-            e.preventDefault();
-            await playNameOfChord();
-            await new Promise((resolve) => setTimeout(resolve, delay));
-            await playSound();
+    const playBatch = useCallback(
+        async (count: number) => {
+            const triadNameArray = Array.from(triadNames);
+            const triadQualityArray = Array.from(triadQualities);
+            const triadInversionArray = Array.from(triadInversions);
+            const stringSetArray = Array.from(stringSets);
+
+            for (let i = 0; i < count; i++) {
+                const triadName = triadNameArray[Math.floor(Math.random() * triadNameArray.length)];
+                const triadQuality = triadQualityArray[Math.floor(Math.random() * triadQualityArray.length)];
+                const triadInversion = triadInversionArray[Math.floor(Math.random() * triadInversionArray.length)];
+                const stringSet = stringSetArray[Math.floor(Math.random() * stringSetArray.length)];
+
+                setCurrentSelection({ triadName, triadQuality, triadInversion, stringSet });
+
+                // play the name of the triad
+                await playNameOfTriad(triadName, triadQuality, triadInversion, stringSet);
+                // delay
+                await new Promise((resolve) => setTimeout(resolve, delay));
+                // play the sound of the triad
+                await playSound(formatSoundName(triadName, triadQuality, stringSet));
+            }
         },
-        [delay, playNameOfChord, playSound]
+        [delay, formatSoundName, playNameOfTriad, playSound, stringSets, triadInversions, triadNames, triadQualities]
     );
 
     return (
-        <main>
-            <h1>Tomohawk Guitar Trainer</h1>
+        <>
+            <Form>
+                <Form.Group widths="equal">
+                    <Form.Input
+                        label={`Delay (${delay} ms)`}
+                        type="range"
+                        value={delay}
+                        step="500"
+                        min={0}
+                        max={10000}
+                        onChange={(e, { value }) => setDelay(Number(value))}
+                    />
 
-            <form onSubmit={onSubmit}>
-                <label>
-                    Delay (milliseconds):
-                    <input type="number" value={delay} step="500" min={0} max={10000} onChange={(e) => setDelay(Number(e.target.value))} />
-                </label>
+                    <Form.Input
+                        label={`Speech Rate (${speechRate})`}
+                        type="range"
+                        value={speechRate}
+                        step={0.1}
+                        min={0}
+                        max={2}
+                        onChange={(e, { value }) => setSpeechRate(Number(value))}
+                    />
 
-                <br />
+                    <Form.Input
+                        label={`Batch Size (${batchSize})`}
+                        type="range"
+                        value={batchSize}
+                        step={1}
+                        min={1}
+                        max={10}
+                        onChange={(e, { value }) => setBatchSize(Number(value))}
+                    />
+                </Form.Group>
 
-                <label>
-                    Chord Name:
-                    <select value={chordName} onChange={(e) => setChordName(e.target.value as ChordName)}>
-                        {chordNameOptions.map((name) => (
-                            <option key={name} value={name}>
-                                {name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <br />
-                <label>
-                    Chord Quality:
-                    <select value={chordQuality} onChange={(e) => setChordQuality(e.target.value as ChordQuality)}>
-                        {chordQualityOptions.map((name) => (
-                            <option key={name} value={name}>
-                                {name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <br />
-                <label>
-                    Chord Inversion:
-                    <select value={chordInversion} onChange={(e) => setChordInversion(e.target.value as ChordInversion)}>
-                        {chordInversionOptions.map((name) => (
-                            <option key={name} value={name}>
-                                {name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <br />
-                <label>
-                    Root String:
-                    <select value={rootString} onChange={(e) => setRootString(e.target.value as RootString)}>
-                        {rootStringOptions.map((name) => (
-                            <option key={name} value={name}>
-                                {name}
-                            </option>
-                        ))}
-                    </select>
-                </label>
-                <br />
+                <Form.Group widths="equal">
+                    <Form.Dropdown
+                        label="Triad Name"
+                        multiple
+                        selection
+                        options={triadNameOptions.map((triadName) => ({ key: triadName, text: triadName, value: triadName }))}
+                        value={Array.from(triadNames)}
+                        onChange={(_, { value }) => setTriadNames(new Set(value as TriadName[]))}
+                    />
+                    <Form.Dropdown
+                        label="Triad Quality"
+                        multiple
+                        selection
+                        options={triadQualityOptions.map((triadQuality) => ({
+                            key: triadQuality,
+                            text: triadQuality,
+                            value: triadQuality
+                        }))}
+                        value={Array.from(triadQualities)}
+                        onChange={(_, { value }) => setTriadQualities(new Set(value as TriadQuality[]))}
+                    />
+                </Form.Group>
 
-                <button type="submit">Start</button>
-            </form>
-        </main>
+                <Form.Group widths="equal">
+                    <Form.Dropdown
+                        label="Triad Inversion"
+                        multiple
+                        selection
+                        options={triadInversionOptions.map((triadInversion) => ({
+                            key: triadInversion,
+                            text: triadInversion,
+                            value: triadInversion
+                        }))}
+                        value={Array.from(triadInversions)}
+                        onChange={(_, { value }) => setTriadInversions(new Set(value as TriadInversion[]))}
+                    />
+                    <Form.Dropdown
+                        label="String Set"
+                        multiple
+                        selection
+                        options={stringSetOptions.map((stringSet) => ({ key: stringSet, text: stringSet, value: stringSet }))}
+                        value={Array.from(stringSets)}
+                        onChange={(_, { value }) => setStringSets(new Set(value as StringSet[]))}
+                    />
+                </Form.Group>
+
+                <Form.Button content="Play" type="button" fluid color="blue" icon="play" onClick={() => playBatch(batchSize)} />
+            </Form>
+            {currentSelection && (
+                <Grid textAlign="center">
+                    <Grid.Column>
+                        <Divider />
+                        <Statistic>
+                            <Statistic.Label>Current Selection</Statistic.Label>
+                            <Statistic.Value>
+                                {currentSelection.triadName} {currentSelection.triadQuality} {currentSelection.triadInversion}{" "}
+                                {currentSelection.stringSet}
+                            </Statistic.Value>
+                        </Statistic>
+                    </Grid.Column>
+                </Grid>
+            )}
+        </>
     );
 }

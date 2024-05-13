@@ -1,9 +1,7 @@
-import "./globals.css";
+import "semantic-ui-css/semantic.min.css";
 
-import { Inter } from "next/font/google";
+import { Grid } from "semantic-ui-react";
 import type { Metadata } from "next";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
     title: "Tomohawk Guitar Trainer",
@@ -17,7 +15,16 @@ export default function RootLayout({
 }>) {
     return (
         <html lang="en">
-            <body className={inter.className}>{children}</body>
+            <body>
+                <nav>
+                    <h1>Tomohawk Guitar Trainer</h1>
+                </nav>
+                <main>
+                    <Grid padded>
+                        <Grid.Column>{children}</Grid.Column>
+                    </Grid>
+                </main>
+            </body>
         </html>
     );
 }

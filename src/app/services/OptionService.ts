@@ -1,20 +1,20 @@
-export const chordNameOptions = [
-    "A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"
+export const triadNameOptions = [
+    "A", "A♯/B♭", "B", "C", "C♯/D♭", "D", "D♯/E♭", "E", "F", "F♯/G♭", "G", "G♯/A♭"
 ] as const;
 
-export const chordQualityOptions = [
-    "Major", "Minor", "Diminished", "Augmented", "Suspended 2nd", "Suspended 4th", "Major 7th", "Minor 7th", "Dominant 7th", "Diminished 7th", "Half Diminished 7th", "Augmented 7th", "Augmented Major 7th", "Minor Major 7th"
+export const triadQualityOptions = [
+    "Major", "Minor"
 ] as const;
 
-export const chordInversionOptions = [
-    "None", "First", "Second", "Third"
+export const triadInversionOptions = [
+    "Root position", "1st inversion", "2nd inversion", "3rd inversion"
 ] as const;
 
-export const rootStringOptions = [
-    "First", "Second", "Third", "Fourth", "Fifth", "Sixth"
+export const stringSetOptions = [
+    "1-3", "2-4", "3-5"
 ] as const;
 
-export type ChordName = typeof chordNameOptions[number];
-export type ChordQuality = typeof chordQualityOptions[number];
-export type ChordInversion = typeof chordInversionOptions[number];
-export type RootString = typeof rootStringOptions[number];
+export type TriadName = typeof triadNameOptions[number];
+export type TriadQuality = typeof triadQualityOptions[number];
+export type TriadInversion = typeof triadInversionOptions[number];
+export type StringSet = typeof stringSetOptions[number];
