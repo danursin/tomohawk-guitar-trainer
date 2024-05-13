@@ -13,6 +13,8 @@ import {
 } from "./services/OptionService";
 import { useCallback, useState } from "react";
 
+import { toast } from "react-toastify";
+
 export default function Home() {
     const [delay, setDelay] = useState<number>(1000);
     const [speechRate, setSpeechRate] = useState<number>(1);
@@ -106,13 +108,17 @@ export default function Home() {
                 const stringSet = stringSetArray[Math.floor(Math.random() * stringSetArray.length)];
 
                 setCurrentSelection({ triadName, triadQuality, triadInversion, stringSet });
-
-                // play the name of the triad
-                await playNameOfTriad(triadName, triadQuality, triadInversion, stringSet);
-                // delay
-                await new Promise((resolve) => setTimeout(resolve, delay));
-                // play the sound of the triad
-                await playSound(formatSoundName(triadName, triadQuality, stringSet));
+                try {
+                    // play the name of the triad
+                    await playNameOfTriad(triadName, triadQuality, triadInversion, stringSet);
+                    // delay
+                    await new Promise((resolve) => setTimeout(resolve, delay));
+                    // play the sound of the triad
+                    await playSound(formatSoundName(triadName, triadQuality, stringSet));
+                } catch (error) {
+                    toast.error(`Error playing ${triadName} ${triadQuality} ${triadInversion} ${stringSet}`);
+                    console.error(error);
+                }
             }
         },
         [delay, formatSoundName, playNameOfTriad, playSound, stringSets, triadInversions, triadNames, triadQualities]
