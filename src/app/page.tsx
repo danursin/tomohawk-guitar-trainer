@@ -19,7 +19,7 @@ export default function Home() {
     const [delay, setDelay] = useState<number>(1000);
     const [speechRate, setSpeechRate] = useState<number>(1);
     const [batchSize, setBatchSize] = useState<number>(1);
-    const [triadNames, setTriadNames] = useState<Set<TriadName>>(new Set<TriadName>(triadNameOptions));
+    const [triadNames, setTriadNames] = useState<Set<TriadName>>(new Set<TriadName>(["A", "B", "C", "D", "E", "F", "G"]));
     const [triadQualities, setTriadQualities] = useState<Set<TriadQuality>>(new Set<TriadQuality>(triadQualityOptions));
     const [triadInversions, setTriadInversions] = useState<Set<TriadInversion>>(new Set<TriadInversion>(["Root position"]));
     const [stringSets, setStringSets] = useState<Set<StringSet>>(new Set<StringSet>(["1-3"]));
