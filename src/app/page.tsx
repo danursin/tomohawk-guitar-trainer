@@ -11,14 +11,12 @@ import {
     triadNameOptions,
     triadQualityOptions
 } from "./services/OptionService";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { toast } from "react-toastify";
 
 export default function Home() {
     const [delay, setDelay] = useState<number>(1000);
-    const [speechRate, setSpeechRate] = useState<number>(1);
-    const [batchSize, setBatchSize] = useState<number>(1);
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [triadNames, setTriadNames] = useState<Set<TriadName>>(new Set<TriadName>(["A", "B", "C", "D", "E", "F", "G"]));
     const [triadQualities, setTriadQualities] = useState<Set<TriadQuality>>(new Set<TriadQuality>(triadQualityOptions));
@@ -33,6 +31,7 @@ export default function Home() {
           }
         | undefined
     >();
+    const playingRef = useRef<boolean>(false);
 
     const formatSoundName = useCallback((triadName: TriadName, triadQuality: TriadQuality, stringSet: StringSet) => {
         const triadNameMap: Record<TriadName, string> = {
@@ -64,6 +63,11 @@ export default function Home() {
             if (triadName === "A") {
                 spokenTriadName = '"A"';
             }
+            if (triadName.includes("/")) {
+                // choose a random one of the two names to pronounce
+                const names = triadName.split("/");
+                spokenTriadName = names[Math.floor(Math.random() * 2)].replace("♯", ". SHARP ").replace("♭", ". FLAT ");
+            }
 
             const parts: string[] = [spokenTriadName, triadQuality];
             if (triadInversion !== "Root position") {
@@ -73,20 +77,16 @@ export default function Home() {
                 parts.push(`String set ${stringSet}`);
             }
             const speech = new SpeechSynthesisUtterance(parts.join(" "));
-            speech.voice = speechSynthesis.getVoices().find((voice) => voice.lang === "en-US") ?? null;
             speech.lang = "en-US";
-            speech.rate = speechRate;
-            speech.volume = 1;
-            speech.pitch = 2;
             speechSynthesis.speak(speech);
             await new Promise((resolve) => {
                 speech.onend = resolve;
             });
         },
-        [speechRate]
+        []
     );
 
-    const playSound = useCallback(async (filename: string) => {
+    const playTriad = useCallback(async (filename: string) => {
         const audio = new Audio(`/sounds/${encodeURIComponent(filename)}`);
         audio.play();
 
@@ -95,43 +95,43 @@ export default function Home() {
         });
     }, []);
 
-    const playBatch = useCallback(
-        async (count: number) => {
-            const triadNameArray = Array.from(triadNames);
-            const triadQualityArray = Array.from(triadQualities);
-            const triadInversionArray = Array.from(triadInversions);
-            const stringSetArray = Array.from(stringSets);
+    const playTriads = useCallback(async () => {
+        if (!playingRef.current) {
+            return;
+        }
 
-            for (let i = 0; i < count; i++) {
-                const triadName = triadNameArray[Math.floor(Math.random() * triadNameArray.length)];
-                const triadQuality = triadQualityArray[Math.floor(Math.random() * triadQualityArray.length)];
-                const triadInversion = triadInversionArray[Math.floor(Math.random() * triadInversionArray.length)];
-                const stringSet = stringSetArray[Math.floor(Math.random() * stringSetArray.length)];
+        const triadNameArray = Array.from(triadNames);
+        const triadQualityArray = Array.from(triadQualities);
+        const triadInversionArray = Array.from(triadInversions);
+        const stringSetArray = Array.from(stringSets);
 
-                setCurrentSelection({ triadName, triadQuality, triadInversion, stringSet });
-                setIsPlaying(true);
-                try {
-                    // play the name of the triad
-                    await playNameOfTriad(triadName, triadQuality, triadInversion, stringSet);
-                    // delay
-                    await new Promise((resolve) => setTimeout(resolve, delay));
-                    // play the sound of the triad
-                    await playSound(formatSoundName(triadName, triadQuality, stringSet));
-                } catch (error) {
-                    toast.error(`Error playing ${triadName} ${triadQuality} ${triadInversion} ${stringSet}`);
-                    console.error(error);
-                } finally {
-                    setIsPlaying(false);
-                }
-            }
-        },
-        [delay, formatSoundName, playNameOfTriad, playSound, stringSets, triadInversions, triadNames, triadQualities]
-    );
+        const triadName = triadNameArray[Math.floor(Math.random() * triadNameArray.length)];
+        const triadQuality = triadQualityArray[Math.floor(Math.random() * triadQualityArray.length)];
+        const triadInversion = triadInversionArray[Math.floor(Math.random() * triadInversionArray.length)];
+        const stringSet = stringSetArray[Math.floor(Math.random() * stringSetArray.length)];
+
+        setCurrentSelection({ triadName, triadQuality, triadInversion, stringSet });
+        try {
+            // play the name of the triad
+            await playNameOfTriad(triadName, triadQuality, triadInversion, stringSet);
+            // delay
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            // play the sound of the triad
+            await playTriad(formatSoundName(triadName, triadQuality, stringSet));
+            // delay
+            await new Promise((resolve) => setTimeout(resolve, delay));
+        } catch (error) {
+            toast.error(`Error playing ${triadName} ${triadQuality} ${triadInversion} ${stringSet}`);
+            console.error(error);
+        } finally {
+            playTriads();
+        }
+    }, [delay, formatSoundName, playNameOfTriad, playTriad, stringSets, triadInversions, triadNames, triadQualities]);
 
     return (
         <>
             <Form>
-                <Form.Group widths="equal">
+                <Form.Group widths="2">
                     <Form.Input
                         label={`Delay (${delay} ms)`}
                         type="range"
@@ -140,26 +140,6 @@ export default function Home() {
                         min={0}
                         max={10000}
                         onChange={(e, { value }) => setDelay(Number(value))}
-                    />
-
-                    <Form.Input
-                        label={`Speech Rate (${speechRate})`}
-                        type="range"
-                        value={speechRate}
-                        step={0.1}
-                        min={0}
-                        max={2}
-                        onChange={(e, { value }) => setSpeechRate(Number(value))}
-                    />
-
-                    <Form.Input
-                        label={`Batch Size (${batchSize})`}
-                        type="range"
-                        value={batchSize}
-                        step={1}
-                        min={1}
-                        max={10}
-                        onChange={(e, { value }) => setBatchSize(Number(value))}
                     />
                 </Form.Group>
 
@@ -210,13 +190,18 @@ export default function Home() {
                 </Form.Group>
 
                 <Form.Button
-                    content={isPlaying ? "Playing..." : "Play"}
+                    content={isPlaying ? "Stop" : "Play"}
                     type="button"
-                    disabled={isPlaying}
                     fluid
-                    color="blue"
-                    icon="play"
-                    onClick={() => playBatch(batchSize)}
+                    color={isPlaying ? "red" : "green"}
+                    icon={isPlaying ? "stop" : "play"}
+                    onClick={async () => {
+                        playingRef.current = !playingRef.current;
+                        setIsPlaying(playingRef.current);
+                        if (playingRef.current) {
+                            await playTriads();
+                        }
+                    }}
                 />
             </Form>
             {currentSelection && (
