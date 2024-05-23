@@ -21,7 +21,7 @@ export default function Home() {
     const [triadNames, setTriadNames] = useState<Set<TriadName>>(new Set<TriadName>(["A", "B", "C", "D", "E", "F", "G"]));
     const [triadQualities, setTriadQualities] = useState<Set<TriadQuality>>(new Set<TriadQuality>(triadQualityOptions));
     const [triadInversions, setTriadInversions] = useState<Set<TriadInversion>>(new Set<TriadInversion>(["Root position"]));
-    const [stringSets, setStringSets] = useState<Set<StringSet>>(new Set<StringSet>(["1-3"]));
+    const [stringSets, setStringSets] = useState<Set<StringSet>>(new Set<StringSet>(["Top 3"]));
     const [currentSelection, setCurrentSelection] = useState<
         | {
               triadName: TriadName;
@@ -33,29 +33,43 @@ export default function Home() {
     >();
     const playingRef = useRef<boolean>(false);
 
-    const formatSoundName = useCallback((triadName: TriadName, triadQuality: TriadQuality, stringSet: StringSet) => {
-        const triadNameMap: Record<TriadName, string> = {
-            A: "A",
-            "A♯/B♭": "A#",
-            B: "B",
-            C: "C",
-            "C♯/D♭": "C#",
-            D: "D",
-            "D♯/E♭": "D#",
-            E: "E",
-            F: "F",
-            "F♯/G♭": "F#",
-            G: "G",
-            "G♯/A♭": "G#"
-        };
+    const formatSoundName = useCallback(
+        (triadName: TriadName, triadQuality: TriadQuality, triadInversion: TriadInversion, stringSet: StringSet) => {
+            const triadNameMap: Record<TriadName, string> = {
+                A: "A",
+                "A♯/B♭": "A#",
+                B: "B",
+                C: "C",
+                "C♯/D♭": "C#",
+                D: "D",
+                "D♯/E♭": "D#",
+                E: "E",
+                F: "F",
+                "F♯/G♭": "F#",
+                G: "G",
+                "G♯/A♭": "G#"
+            };
 
-        const triadQualityMap: Record<TriadQuality, string> = {
-            Major: "maj",
-            Minor: "min"
-        };
+            const triadQualityMap: Record<TriadQuality, string> = {
+                Major: "maj",
+                Minor: "min"
+            };
 
-        return `${triadNameMap[triadName]}${triadQualityMap[triadQuality]}_NoInversion_${stringSet}.mp3`;
-    }, []);
+            const triadInversionMap: Record<TriadInversion, string> = {
+                "Root position": "root",
+                "1st inversion": "1st",
+                "2nd inversion": "2nd"
+            };
+
+            const stringSetMap: Record<StringSet, string> = {
+                "Top 3": "top",
+                "Middle Top": "mid"
+            };
+
+            return `${triadNameMap[triadName]}${triadQualityMap[triadQuality]}_${triadInversionMap[triadInversion]}_${stringSetMap[stringSet]}.mp3`;
+        },
+        []
+    );
 
     const playNameOfTriad = useCallback(
         async (triadName: TriadName, triadQuality: TriadQuality, triadInversion: TriadInversion, stringSet: StringSet) => {
@@ -73,9 +87,7 @@ export default function Home() {
             if (triadInversion !== "Root position") {
                 parts.push(triadInversion);
             }
-            if (stringSet !== "1-3") {
-                parts.push(`String set ${stringSet}`);
-            }
+
             const speech = new SpeechSynthesisUtterance(parts.join(" "));
             speech.lang = "en-US";
             speechSynthesis.speak(speech);
@@ -117,7 +129,7 @@ export default function Home() {
             // delay
             await new Promise((resolve) => setTimeout(resolve, delay));
             // play the sound of the triad
-            await playTriad(formatSoundName(triadName, triadQuality, stringSet));
+            await playTriad(formatSoundName(triadName, triadQuality, triadInversion, stringSet));
             // delay
             await new Promise((resolve) => setTimeout(resolve, delay));
         } catch (error) {

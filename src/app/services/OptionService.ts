@@ -7,11 +7,11 @@ export const triadQualityOptions = [
 ] as const;
 
 export const triadInversionOptions = [
-    "Root position", "1st inversion", "2nd inversion", "3rd inversion"
+    "Root position", "1st inversion", "2nd inversion"
 ] as const;
 
 export const stringSetOptions = [
-    "1-3", "2-4", "3-5"
+    "Top 3", "Middle Top"
 ] as const;
 
 export type TriadName = typeof triadNameOptions[number];
