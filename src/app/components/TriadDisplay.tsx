@@ -15,7 +15,7 @@ const TriadDisplay: React.FC<TriadDisplayProps> = ({ triadName, triadQuality, tr
         <Statistic>
             <Statistic.Label>Current Selection</Statistic.Label>
             <Statistic.Value>
-                <Table compact singleLine celled>
+                <Table compact celled stackable>
                     <Table.Row warning>
                         <Table.Cell content={triadName} />
                         <Table.Cell content={triadQuality} />
