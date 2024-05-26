@@ -83,11 +83,7 @@ export default function Home() {
                 spokenTriadName = names[Math.floor(Math.random() * 2)].replace("♯", ". SHARP ").replace("♭", ". FLAT ");
             }
 
-            const parts: string[] = [spokenTriadName, triadQuality];
-            if (triadInversion !== "Root position") {
-                parts.push(triadInversion);
-            }
-
+            const parts: string[] = [spokenTriadName, triadQuality, triadInversion, stringSet];
             const speech = new SpeechSynthesisUtterance(parts.join(" "));
             speech.lang = "en-US";
             speechSynthesis.speak(speech);
