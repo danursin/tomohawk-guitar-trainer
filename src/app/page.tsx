@@ -63,7 +63,7 @@ export default function Home() {
 
             const stringSetMap: Record<StringSet, string> = {
                 "Top 3": "top",
-                "Middle Top": "mid"
+                "Middle Top": "mid1"
             };
 
             return `${triadNameMap[triadName]}${triadQualityMap[triadQuality]}_${triadInversionMap[triadInversion]}_${stringSetMap[stringSet]}.mp3`;
@@ -98,13 +98,25 @@ export default function Home() {
         []
     );
 
-    const playTriad = useCallback(async (filename: string) => {
+    const playTriadSound = useCallback(async (filename: string) => {
         const audio = new Audio(`/sounds/${encodeURIComponent(filename)}`);
+        audio.onerror = (error) => {
+            toast.error(`Error playing ${filename}`);
+        };
+
         audio.play();
 
-        await new Promise((resolve) => {
-            audio.onended = resolve;
-        });
+        try {
+            // wait for the audio to finish playing
+            await new Promise((resolve, reject) => {
+                audio.onended = resolve;
+                audio.onerror = reject;
+            });
+        } catch {
+            toast.error(`Error playing ${filename}`);
+            audio.pause();
+            audio.remove();
+        }
     }, []);
 
     const playTriads = useCallback(async () => {
@@ -129,7 +141,7 @@ export default function Home() {
             // delay
             await new Promise((resolve) => setTimeout(resolve, delay));
             // play the sound of the triad
-            await playTriad(formatSoundName(triadName, triadQuality, triadInversion, stringSet));
+            await playTriadSound(formatSoundName(triadName, triadQuality, triadInversion, stringSet));
             // delay
             await new Promise((resolve) => setTimeout(resolve, delay));
         } catch (error) {
@@ -138,7 +150,7 @@ export default function Home() {
         } finally {
             playTriads();
         }
-    }, [delay, formatSoundName, playNameOfTriad, playTriad, stringSets, triadInversions, triadNames, triadQualities]);
+    }, [delay, formatSoundName, playNameOfTriad, playTriadSound, stringSets, triadInversions, triadNames, triadQualities]);
 
     return (
         <>
