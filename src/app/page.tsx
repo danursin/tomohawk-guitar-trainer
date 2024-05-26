@@ -13,6 +13,7 @@ import {
 } from "./services/OptionService";
 import { useCallback, useRef, useState } from "react";
 
+import TriadDisplay from "./components/TriadDisplay";
 import { toast } from "react-toastify";
 
 export default function Home() {
@@ -83,7 +84,7 @@ export default function Home() {
                 spokenTriadName = names[Math.floor(Math.random() * 2)].replace("♯", ". SHARP ").replace("♭", ". FLAT ");
             }
 
-            const parts: string[] = [spokenTriadName, triadQuality, triadInversion, stringSet];
+            const parts: string[] = [spokenTriadName, triadQuality, "; ", triadInversion, stringSet];
             const speech = new SpeechSynthesisUtterance(parts.join(" "));
             speech.lang = "en-US";
             speechSynthesis.speak(speech);
@@ -228,13 +229,7 @@ export default function Home() {
                 <Grid textAlign="center">
                     <Grid.Column>
                         <Divider />
-                        <Statistic>
-                            <Statistic.Label>Current Selection</Statistic.Label>
-                            <Statistic.Value>
-                                {currentSelection.triadName} {currentSelection.triadQuality} {currentSelection.triadInversion}{" "}
-                                {currentSelection.stringSet}
-                            </Statistic.Value>
-                        </Statistic>
+                        <TriadDisplay {...currentSelection} />
                     </Grid.Column>
                 </Grid>
             )}
